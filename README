@@ -1,0 +1,54 @@
+mod_recaptcha Readme File
+=========================
+
+Author: François Cardinaux, CH 1207 Geneva (http://bit.ly/qTaona)
+
+Overview of the current folder: 
+  * The current folder is dedicated to the mod_recaptcha module for Zotonic 
+    (http://www.zotonic.com)
+  * It contains all files that are necessary to this project
+  * There is no symlink of any sort to external resources
+
+Credits
+-------
+
+The following references have been helpful to write this module: 
+  * the reCaptcha API: http://code.google.com/apis/recaptcha/
+  * How to make HTTP post: 
+    http://erlangexamples.com/2009/02/24/how-to-make-http-post/
+  * recaptcha-erlang: http://code.google.com/p/recaptcha-erlang/
+
+Installation
+------------
+
+ 1. Copy this folder to /path/to/zotonic/modules/
+ 2. Start Zotonic
+ 3. Open your site with a web browser and log in as admin
+ 4. Enable the Recaptcha module: go "Modules", find the "Recaptcha" module and 
+    click on "activate"
+ 5. Go to "System" and click on "rescan modules"
+ 6. Edit your signup form template (typically signup.tpl) and add the following
+    line where you want the captcha to appear: 
+ 
+        {% include "_captcha.tpl" %}
+ 
+Configuration
+-------------
+
+ 1. Go to http://www.google.com/recaptcha and follow the instructions to create
+    your Recaptcha keys (one public key and one private key)
+    
+ 2. Go to "Config" and click on "make a new config setting"
+ 
+        Module: mod_recaptcha
+        Key:    public_key
+        Value:  <your public key>
+
+ 6. Always in "Config", click on "make a new config setting" again
+ 
+        Module: mod_recaptcha
+        Key:    private_key
+        Value:  <your private key>
+        
+
+    
