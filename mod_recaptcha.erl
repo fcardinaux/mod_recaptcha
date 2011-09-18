@@ -14,6 +14,8 @@
 
 -export([observe_signup_check/3]).
 
+-export([check_recaptcha/1]).
+
 -include_lib("zotonic.hrl").
 
 %% @doc Recaptcha check on a signup
@@ -21,23 +23,21 @@
 %% z_notifier:foldl(signup_check, ...) calls **all** signup_check observers, 
 %% including this one. 
 observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
-    Challenge   = z_context:get_q("recaptcha_challenge_field", Context),
-    Response    = z_context:get_q("recaptcha_response_field", Context),
-    
-    case check_recaptcha(Challenge, Response, Context) of
+    case check_recaptcha(Context) of
         ok -> 
             {ok, Props, SignupProps};
         {error, _} = Error -> 
             Error
     end.
     
-%% Support functions
-
 %% @doc This function calls the reCAPTCHA API and verifies that the response
 %% corresponds to the challenge
-check_recaptcha(Challenge, Response, Context) ->
+%% @spec check_recaptcha(record()) -> ok | {error, Reason}
+check_recaptcha(Context) ->
 
-    RemoteIP = "127.0.0.1", %% @todo Replace this with the remote IP address
+    RemoteIP    = "127.0.0.1", %% @todo Replace this with the user's IP address
+    Challenge   = z_context:get_q("recaptcha_challenge_field", Context),
+    Response    = z_context:get_q("recaptcha_response_field", Context),
     
     % Explanation: 
     %   * http://erlangexamples.com/2009/02/24/how-to-make-http-post/ 
@@ -78,6 +78,8 @@ check_recaptcha(Challenge, Response, Context) ->
             Error
     end.
                         
+%% Support function
+
 get_recaptcha_verify_url() ->
     "http://www.google.com/recaptcha/api/verify".
 
