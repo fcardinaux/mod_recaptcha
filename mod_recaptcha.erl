@@ -27,6 +27,8 @@ observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
             Error
     end.
     
+%% Support functions
+
 check_recaptcha(Challenge, Response, Context) ->
 
     RemoteIP = "127.0.0.1", %% @todo Replace this with the remote IP address

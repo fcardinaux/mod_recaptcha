@@ -38,12 +38,18 @@ m_to_list(_, _Context) ->
 %% @spec m_value(Source, Context) -> term()
 m_value(#m{value=undefined}, _Context) ->
     undefined.
-    
+ 
+%% @doc Get the private key
+%% @spec private_key(record()) -> string()
 private_key(Context) ->
     get_key(private_key, Context).
 
+%% @doc Get the public key
+%% @spec public_key(record()) -> string()
 public_key(Context) ->
     get_key(public_key, Context).
+
+%% Support function
 
 get_key(Type, Context) ->
     Val = m_config:get_value(mod_recaptcha, Type, Context),
