@@ -16,6 +16,10 @@
 
 -include_lib("zotonic.hrl").
 
+%% @doc Recaptcha check on a signup
+%% This function is called by mod_signup:check_signup/3, where the instruction
+%% z_notifier:foldl(signup_check, ...) calls **all** signup_check observers, 
+%% including this one. 
 observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
     Challenge   = z_context:get_q("recaptcha_challenge_field", Context),
     Response    = z_context:get_q("recaptcha_response_field", Context),
@@ -29,6 +33,8 @@ observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
     
 %% Support functions
 
+%% @doc This function calls the reCAPTCHA API and verifies that the response
+%% corresponds to the challenge
 check_recaptcha(Challenge, Response, Context) ->
 
     RemoteIP = "127.0.0.1", %% @todo Replace this with the remote IP address
