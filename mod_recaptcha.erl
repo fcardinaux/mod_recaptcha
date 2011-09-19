@@ -35,7 +35,7 @@ observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
 %% @spec check_recaptcha(record()) -> ok | {error, Reason}
 check_recaptcha(Context) ->
 
-    RemoteIP    = "127.0.0.1", %% @todo Replace this with the user's IP address
+    RemoteIP    = get_remote_ip(Context), 
     Challenge   = z_context:get_q("recaptcha_challenge_field", Context),
     Response    = z_context:get_q("recaptcha_response_field", Context),
     
@@ -82,4 +82,17 @@ check_recaptcha(Context) ->
 
 get_recaptcha_verify_url() ->
     "http://www.google.com/recaptcha/api/verify".
+
+get_remote_ip(Context) ->
+    % Wrapped this instruction in a try-catch statement, because it relies on
+    % wrq:peer/1, which theoretically may fail, if the function guard isn't 
+    % respected.
+    try m_req:get(peer, Context) of
+        IP -> 
+            IP
+    catch
+        Error:Reason -> 
+            io:format("Unable to find remote IP: ~p, ~p~n", [Error, Reason]),
+            "127.0.0.1"
+    end.
 
