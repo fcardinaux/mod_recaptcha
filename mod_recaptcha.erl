@@ -84,8 +84,8 @@ get_recaptcha_verify_url() ->
     "http://www.google.com/recaptcha/api/verify".
 
 get_remote_ip(Context) ->
-    % Wrapped this instruction in a try-catch statement, because it relies on
-    % wrq:peer/1, which theoretically may fail, if the function guard isn't 
+    % This instruction is wrapped in a try-catch statement because it relies on
+    % wrq:peer/1, which may theoretically fail, if the function guard isn't 
     % respected.
     try m_req:get(peer, Context) of
         IP -> 

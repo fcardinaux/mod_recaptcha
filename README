@@ -27,10 +27,6 @@ Installation
  4. Enable the Recaptcha module: go "Modules", find the "Recaptcha" module and 
     click on "activate"
  5. Go to "System" and click on "rescan modules"
- 6. Edit your signup form template (typically signup.tpl) and add the following
-    line where you want the captcha to appear: 
- 
-        {% include "_captcha.tpl" %}
  
 Configuration
 -------------
@@ -50,5 +46,39 @@ Configuration
         Key:    private_key
         Value:  <your private key>
         
+Using mod_recaptcha on signup forms
+-----------------------------------
 
-    
+    Edit your signup form template (typically signup.tpl) and add the following
+    line where you want the captcha to appear: 
+ 
+        {% include "_captcha.tpl" %}
+
+Using mod_recaptcha on other forms
+----------------------------------
+
+ 1. Edit your form template and add the following line where you want the 
+    captcha to appear: 
+ 
+        {% include "_captcha.tpl" %}
+
+ 2. Add the following code to your form processing: 
+ 
+        ...
+        case mod_recaptcha:check_recaptcha(Context) of
+            ok -> 
+                process_form(Context);
+            {error, Error} ->
+                display_error_message(Error)
+        end,
+        ...
+        
+        % Implementation not shown here
+        process_form(_Context) ->
+            todo.
+ 
+        % Implementation not shown here
+        display_error_message(_Error) ->
+            todo.
+ 
+ 
