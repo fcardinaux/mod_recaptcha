@@ -83,8 +83,8 @@ Using mod_recaptcha on other forms
             
  3. Recompile Zotonic
  
-Disabling mod_recaptcha with an observer
-----------------------------------------
+Disabling recaptcha with an observer
+------------------------------------
 
     Why
     ...
