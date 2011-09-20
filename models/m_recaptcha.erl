@@ -17,7 +17,7 @@
     m_value/2
 ]).
 
--export([private_key/1, public_key/1]).
+-export([private_key/1, public_key/1, is_enabled/1]).
 
 -include_lib("zotonic.hrl").
 
@@ -25,6 +25,9 @@
 %% @spec m_find_value(Key, Source, Context) -> term()
 m_find_value(public_key, #m{value=undefined}, Context) ->
     public_key(Context);
+
+m_find_value(is_enabled, #m{value=undefined}, Context) ->
+    is_enabled(Context);
 
 m_find_value(_Key, #m{value=undefined}, _Context) ->
     undefined.
@@ -48,6 +51,16 @@ private_key(Context) ->
 %% @spec public_key(record()) -> string()
 public_key(Context) ->
     get_key(public_key, Context).
+    
+is_enabled(Context) ->
+    IsEnabled = z_notifier:foldl(recaptcha_enabled, true, Context),
+    if 
+        is_boolean(IsEnabled) -> 
+            IsEnabled;
+            
+        true ->
+            throw({unable_to_observe, IsEnabled})
+    end.
 
 %% Support function
 

@@ -23,11 +23,17 @@
 %% z_notifier:foldl(signup_check, ...) calls **all** signup_check observers, 
 %% including this one. 
 observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
-    case check_recaptcha(Context) of
-        ok -> 
+    case m_recaptcha:is_enabled(Context) of
+        false ->
             {ok, Props, SignupProps};
-        {error, _} = Error -> 
-            Error
+            
+        _ ->
+            case check_recaptcha(Context) of
+                ok -> 
+                    {ok, Props, SignupProps};
+                {error, _} = Error -> 
+                    Error
+            end
     end.
     
 %% @doc This function calls the reCAPTCHA API and verifies that the response

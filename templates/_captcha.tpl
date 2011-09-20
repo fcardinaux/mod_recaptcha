@@ -4,6 +4,8 @@
         * for the script: the reCAPTCHA team of Google
         * for the modifications: François Cardinaux, CH 1207 Geneva (http://bit.ly/qTaona)
 #}
+{% if m.recaptcha.is_enabled %}
+
 {% with m.recaptcha.public_key as public_key %}
 <script 
     type="text/javascript"
@@ -21,4 +23,6 @@
         value="manual_challenge">
 </noscript>
 {% endwith %}
+
+{% endif %}
 
