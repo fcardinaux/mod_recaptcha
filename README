@@ -24,9 +24,10 @@ Installation
  1. Copy this folder to /path/to/zotonic/modules/
  2. Start Zotonic
  3. Open your site with a web browser and log in as admin
- 4. Enable the Recaptcha module: go "Modules", find the "Recaptcha" module and 
+ 4. Open the amnistration interface (http://<your site>/admin)
+ 5. Enable the Recaptcha module: go "Modules", find the "Recaptcha" module and 
     click on "activate"
- 5. Go to "System" and click on "rescan modules"
+ 6. Go to "System" and click on "rescan modules"
  
 Configuration
 -------------
@@ -34,13 +35,15 @@ Configuration
  1. Go to http://www.google.com/recaptcha and follow the instructions to create
     your Recaptcha keys (one public key and one private key)
     
- 2. Go to "Config" and click on "make a new config setting"
+ 2. Open the amnistration interface (http://<your site>/admin)
+ 
+ 3. Go to "Config" and click on "make a new config setting"
  
         Module: mod_recaptcha
         Key:    public_key
         Value:  <your public key>
 
- 6. Always in "Config", click on "make a new config setting" again
+ 4. Always in "Config", click on "make a new config setting" again
  
         Module: mod_recaptcha
         Key:    private_key
