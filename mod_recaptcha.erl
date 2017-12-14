@@ -26,15 +26,27 @@ observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
     case m_recaptcha:is_enabled(Context) of
         false ->
             {ok, Props, SignupProps};
-
         _ ->
-            case check_recaptcha(Context) of
-                ok ->
+            %% Check whether signup came from the regular signup form. In that case,
+            %% validate the reCAPTCHA. In other cases (e.g. when signup up through
+            %% Facebook) there's no reCAPTCHA to validate.
+            case lists:any(fun is_form_signup/1, SignupProps) of
+                false ->
                     {ok, Props, SignupProps};
-                {error, _} = Error ->
-                    Error
+                true ->
+                    case check_recaptcha(Context) of
+                        ok ->
+                            {ok, Props, SignupProps};
+                        {error, _} = Error ->
+                            Error
+                    end
             end
     end.
+
+is_form_signup({identity, {username_pw, _, _, _}}) ->
+    true;
+is_form_signup(_) ->
+    false.
 
 %% @doc This function calls the reCAPTCHA API and verifies that the response
 %% corresponds to the challenge
