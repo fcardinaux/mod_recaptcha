@@ -7,7 +7,7 @@
 %% @todo Implement the use of the Ajax API (http://code.google.com/apis/recaptcha/docs/display.html)
 
 -module(mod_recaptcha).
--author("François Cardinaux <fcardinaux@gmail.com>").
+-author("François Cardinaux <fcardinaux@gmail.com>, Driebit <tech@driebit.nl>").
 
 -mod_title("Recaptcha").
 -mod_description("Recaptcha module.").
@@ -20,46 +20,65 @@
 
 %% @doc Recaptcha check on a signup
 %% This function is called by mod_signup:check_signup/3, where the instruction
-%% z_notifier:foldl(signup_check, ...) calls **all** signup_check observers, 
-%% including this one. 
+%% z_notifier:foldl(signup_check, ...) calls **all** signup_check observers,
+%% including this one.
 observe_signup_check(signup_check, {ok, Props, SignupProps}, Context) ->
     case m_recaptcha:is_enabled(Context) of
         false ->
             {ok, Props, SignupProps};
-            
         _ ->
-            case check_recaptcha(Context) of
-                ok -> 
+            %% Check whether signup came from the regular signup form. In that case,
+            %% validate the reCAPTCHA. In other cases (e.g. when signup up through
+            %% Facebook) there's no reCAPTCHA to validate.
+            case lists:any(fun is_form_signup/1, SignupProps) of
+                false ->
                     {ok, Props, SignupProps};
-                {error, _} = Error -> 
-                    Error
+                true ->
+                    case check_recaptcha(Context) of
+                        ok ->
+                            {ok, Props, SignupProps};
+                        {error, _} = Error ->
+                            Error
+                    end
             end
     end.
-    
+
+is_form_signup({identity, {username_pw, _, _, _}}) ->
+    true;
+is_form_signup(_) ->
+    false.
+
 %% @doc This function calls the reCAPTCHA API and verifies that the response
 %% corresponds to the challenge
 %% @spec check_recaptcha(record()) -> ok | {error, Reason}
 check_recaptcha(Context) ->
+    case z_context:get_q("g-recaptcha-response", Context) of
+        undefined ->
+            check_recaptcha1(Context);
+        Response ->
+            check_recaptcha2(Response, Context)
+    end.
 
-    RemoteIP    = get_remote_ip(Context), 
+check_recaptcha1(Context) ->
+    RemoteIP    = get_remote_ip(Context),
     Challenge   = z_context:get_q("recaptcha_challenge_field", Context),
     Response    = z_context:get_q("recaptcha_response_field", Context),
-    
-    % Explanation: 
-    %   * http://erlangexamples.com/2009/02/24/how-to-make-http-post/ 
+
+    % Explanation:
+    %   * http://erlangexamples.com/2009/02/24/how-to-make-http-post/
     %   * http://code.google.com/p/recaptcha-erlang/
     inets:start(),
     Data = string:join(
                     [
-                        string:join(["privatekey",   mochiweb_util:quote_plus(m_recaptcha:private_key(Context))], "="), 
-                        string:join(["remoteip",     mochiweb_util:quote_plus(RemoteIP)], "="), 
-                        string:join(["challenge",    mochiweb_util:quote_plus(Challenge)], "="), 
+                        string:join(["privatekey",   mochiweb_util:quote_plus(m_recaptcha:private_key(Context))], "="),
+                        string:join(["remoteip",     mochiweb_util:quote_plus(RemoteIP)], "="),
+                        string:join(["challenge",    mochiweb_util:quote_plus(Challenge)], "="),
                         string:join(["response",     mochiweb_util:quote_plus(Response)], "=")
                     ], "&"),
-                    
-    HttpResponse = 
+
+    HttpResponse =
 		httpc:request(
-			post, 
+			post,
 			{
 				get_recaptcha_verify_url(),
 				[],
@@ -67,7 +86,7 @@ check_recaptcha(Context) ->
 				Data
 			},
 			[], []),
-			
+
     case HttpResponse of
         {ok, Result} ->
             [FirstLine|NextLines] = case Result of
@@ -75,15 +94,48 @@ check_recaptcha(Context) ->
                 {_Status, Body}           -> string:tokens(Body, "\r\n")
             end,
             case FirstLine of
-                "true" -> 
+                "true" ->
                     ok;
-                _ -> 
-                    {error, lists:flatten(NextLines)}
+        _ ->
+        {error, lists:flatten(NextLines)}
             end;
         {error, _} = Error ->
             Error
     end.
-                        
+
+http_post(Url, Data) ->
+    EncodedData = z_convert:to_binary(mochiweb_util:urlencode(Data)),
+    case httpc:request(post, {Url, [], "application/x-www-form-urlencoded", EncodedData}, [], []) of
+        {ok, {
+            {_HTTP, StatusCode, _OK},
+            _Headers,
+            Body
+        }} when StatusCode >= 200 andalso StatusCode < 400 ->
+            mochijson2:decode(Body);
+        Error ->
+            Error
+    end.
+
+check_recaptcha2(Response, Context) ->
+    case http_post(
+        "https://www.google.com/recaptcha/api/siteverify",
+        [
+            {secret, m_recaptcha:get_key(secret, Context)},
+            {response, z_url:url_encode(Response)},
+            {remoteip, get_remote_ip(Context)}
+        ]
+    ) of
+        {error, Error} ->
+            Error;
+        {struct, Json} ->
+            case proplists:get_value(<<"success">>, Json) of
+                true ->
+                    ok;
+                false ->
+                    {error, "invalid response code"}
+            end
+    end.
+
 %% Support function
 
 get_recaptcha_verify_url() ->
@@ -91,14 +143,13 @@ get_recaptcha_verify_url() ->
 
 get_remote_ip(Context) ->
     % This instruction is wrapped in a try-catch statement because it relies on
-    % wrq:peer/1, which may theoretically fail, if the function guard isn't 
+    % wrq:peer/1, which may theoretically fail, if the function guard isn't
     % respected.
     try m_req:get(peer, Context) of
-        IP -> 
+        IP ->
             IP
     catch
-        Error:Reason -> 
+        Error:Reason ->
             io:format("Unable to find remote IP: ~p, ~p~n", [Error, Reason]),
             "127.0.0.1"
     end.
-
